@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import axios from 'axios'
+import axios from '@/plugins/axios' 
 
 const ROLE_ABILITIES = {
   admin: ['admin', 'view-reports', 'stock-in', 'stock-out', 'suppliers'],
@@ -25,7 +25,7 @@ export const useAuthStore = defineStore('auth', () => {
   let csrfFetched = false
   const login = async (email, password) => {
     if (!csrfFetched) {
-      await axios.get('/sanctum/csrf-cookie', { withCredentials: true })
+      await axios.get('/api/v1/csrf-cookie') 
       csrfFetched = true
     }
     try {
