@@ -46,13 +46,16 @@ const {
 
 app.use(cors({
   origin: [
-    'https://warehouse-management-six-kappa.vercel.app/', // Điền chính xác URL trang Vercel frontend của bạn vào đây
-    'http://localhost:5173',                  // Cho phép chạy test local với Vite
-    'http://localhost:3000'                   // Cho phép chạy test local với React cũ/Next.js
+    
+    'https://warehouse-management-git-main-creeper2810s-projects.vercel.app', 
+    'https://warehouse-management-aaruzfj8o-creeper2810s-projects.vercel.app',
+    
+    'http://localhost:5173',
+    'http://localhost:3000'
   ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  credentials: true,                          // BẮT BUỘC: Vì code của bạn có dùng express-session và cookie-parser
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-XSRF-TOKEN', 'X-CSRF-TOKEN'] // Cho phép các Header bảo mật hệ thống của bạn
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  credentials: true, // Bắt buộc phải có để truyền nhận Session Cookie
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-XSRF-TOKEN', 'X-CSRF-TOKEN']
 }));
 
 function asyncRoute(handler) {
