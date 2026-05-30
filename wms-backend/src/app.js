@@ -5,6 +5,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const { Op, fn, col, where: sqlWhere } = require('sequelize');
+const app = express();
 
 const config = require('./config');
 const {
@@ -42,6 +43,17 @@ const {
   validationError,
   verifyPassword,
 } = require('./utils');
+
+app.use(cors({
+  origin: [
+    'https://warehouse-management-six-kappa.vercel.app/', // Điền chính xác URL trang Vercel frontend của bạn vào đây
+    'http://localhost:5173',                  // Cho phép chạy test local với Vite
+    'http://localhost:3000'                   // Cho phép chạy test local với React cũ/Next.js
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true,                          // BẮT BUỘC: Vì code của bạn có dùng express-session và cookie-parser
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-XSRF-TOKEN', 'X-CSRF-TOKEN'] // Cho phép các Header bảo mật hệ thống của bạn
+}));
 
 function asyncRoute(handler) {
   return (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next);
