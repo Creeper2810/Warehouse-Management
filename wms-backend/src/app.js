@@ -44,22 +44,6 @@ const {
   verifyPassword,
 } = require('./utils');
 
-app.use(cors({
-  origin: function (origin, callback) {
-    // 1. Cho phép Postman / Mobile chạy không có origin (!origin)
-    // 2. Cho phép chạy ở máy cá nhân (localhost)
-    // 3. Sử dụng .includes() thay vì .endsWith() để kiểm tra nếu tên miền chứa chữ 'vercel.app'
-    if (!origin || origin.includes('localhost') || origin.includes('vercel.app')) {
-      callback(null, true);
-    } else {
-      callback(new Error('Blocked by CORS policy'));
-    }
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  credentials: true, // Giữ nguyên để đồng bộ cookie session xác thực
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-XSRF-TOKEN', 'X-CSRF-TOKEN']
-}));
-
 function asyncRoute(handler) {
   return (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next);
 }
@@ -446,11 +430,11 @@ function createApp() {
   app.set('trust proxy', 1);
   app.use(helmet({ contentSecurityPolicy: false }));
   app.use(cors({
-    origin(origin, callback) {
-      if (!origin || origin === config.frontendOrigin || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+    origin: function (origin, callback) {
+      if (!origin || origin.includes('localhost') || origin.includes('vercel.app') || origin === config.frontendOrigin) {
         callback(null, true);
       } else {
-        callback(null, false);
+        callback(new Error('Blocked by CORS policy'));
       }
     },
     credentials: true,
@@ -463,10 +447,11 @@ function createApp() {
     secret: config.sessionSecret,
     resave: false,
     saveUninitialized: false,
+    proxy: true, // Thêm cấu hình bắt buộc này cho môi trường Cloud
     cookie: {
       httpOnly: true,
-      sameSite: 'lax',
-      secure: false,
+      sameSite: 'none',// Sửa từ 'lax' thành 'none' để chia sẻ phiên làm việc từ Vercel sang Railway
+      secure: true, // Sửa từ false thành true vì môi trường chạy thực tế bắt buộc chạy HTTPS
       path: '/',
       maxAge: 1000 * 60 * 120,
     },
@@ -477,13 +462,15 @@ function createApp() {
     res.json({ name: 'WMS Backend Node', status: 'ok' });
   });
 
-  app.get('/sanctum/csrf-cookie', (req, res) => {
+ // 4. CHỈNH SỬA: Chuyển đổi endpoint từ '/sanctum/csrf-cookie' thành '/api/v1/csrf-cookie' 
+  // để khớp 100% với luồng gọi từ file Pinia Store ở Frontend, triệt tiêu lỗi 404
+  app.get('/api/v1/csrf-cookie', (req, res) => {
     const token = randomToken(20);
     req.session.csrfToken = token;
     res.cookie('XSRF-TOKEN', token, {
-      httpOnly: false,
-      sameSite: 'lax',
-      secure: false,
+      httpOnly: false, // Để trống false để JavaScript phía Frontend đọc được mã token
+      sameSite: 'none', // Phải đồng bộ 'none' giống session cookie ở trên
+      secure: true,    
       path: '/',
       maxAge: 1000 * 60 * 120,
     });
