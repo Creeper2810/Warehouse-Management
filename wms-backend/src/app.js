@@ -45,16 +45,18 @@ const {
 } = require('./utils');
 
 app.use(cors({
-  origin: [
-    
-    'https://warehouse-management-git-main-creeper2810s-projects.vercel.app', 
-    'https://warehouse-management-aaruzfj8o-creeper2810s-projects.vercel.app',
-    
-    'http://localhost:5173',
-    'http://localhost:3000'
-  ],
+   origin: function (origin, callback) {
+    // 1. Cho phép các request không có origin (như các thiết bị Mobile gọi API hoặc Postman)
+    // 2. Cho phép chạy test ở máy cá nhân (localhost)
+    // 3. Cho phép TẤT CẢ các đường link tự sinh từ hệ thống Vercel (.vercel.app)
+    if (!origin || origin.includes('localhost') || origin.endsWith('vercel.app')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Blocked by CORS policy'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  credentials: true, // Bắt buộc phải có để truyền nhận Session Cookie
+  credentials: true, // BẮT BUỘC: Để hệ thống nhận diện Session/Cookie xác thực giữa hai miền độc lập
   allowedHeaders: ['Content-Type', 'Authorization', 'X-XSRF-TOKEN', 'X-CSRF-TOKEN']
 }));
 
