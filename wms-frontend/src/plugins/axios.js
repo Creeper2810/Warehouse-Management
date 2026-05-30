@@ -6,7 +6,7 @@ import { Notify } from 'quasar'
 // Every request uses credentials for Sanctum-style SPA cookies.
 axios.defaults.withCredentials = true
 // Ensure axios uses same-origin (Vite dev server) so proxy sends to backend
-axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'https://warehouse-management-production-29fb.up.railway.app'
+axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'https://railway.app'
 // Laravel defaults
 axios.defaults.xsrfCookieName = 'XSRF-TOKEN'
 axios.defaults.xsrfHeaderName = 'X-XSRF-TOKEN'
