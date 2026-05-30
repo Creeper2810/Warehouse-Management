@@ -1,0 +1,47 @@
+{
+  "name": "wms-backend-node",
+  "version": "1.0.0",
+  "description": "Node.js + Express backend for the WMS barcode project.",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=22.22.0"
+  },
+  "scripts": {
+    "check:node": "node scripts/check-node-version.cjs",
+    "predev": "node scripts/check-node-version.cjs",
+    "prestart": "node scripts/check-node-version.cjs",
+    "pretest": "node scripts/check-node-version.cjs",
+    "dev": "node src/server.js",
+    "start": "node src/server.js",
+    "migrate": "node src/scripts/migrate.js",
+    "seed": "node src/scripts/seed.js",
+    "setup": "npm install && npm run migrate && npm run seed",
+    "test": "jest --runInBand"
+  },
+  "keywords": [
+    "wms",
+    "express",
+    "mysql",
+    "barcode"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "helmet": "^8.0.0",
+    "morgan": "^1.10.0",
+    "mysql2": "^3.11.5",
+    "sequelize": "^6.37.5"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0"
+  },
+  "overrides": {
+    "uuid": "^11.1.1"
+  }
+}
