@@ -45,18 +45,18 @@ const {
 } = require('./utils');
 
 app.use(cors({
-   origin: function (origin, callback) {
-    // 1. Cho phép các request không có origin (như các thiết bị Mobile gọi API hoặc Postman)
-    // 2. Cho phép chạy test ở máy cá nhân (localhost)
-    // 3. Cho phép TẤT CẢ các đường link tự sinh từ hệ thống Vercel (.vercel.app)
-    if (!origin || origin.includes('localhost') || origin.endsWith('vercel.app')) {
+  origin: function (origin, callback) {
+    // 1. Cho phép Postman / Mobile chạy không có origin (!origin)
+    // 2. Cho phép chạy ở máy cá nhân (localhost)
+    // 3. Sử dụng .includes() thay vì .endsWith() để kiểm tra nếu tên miền chứa chữ 'vercel.app'
+    if (!origin || origin.includes('localhost') || origin.includes('vercel.app')) {
       callback(null, true);
     } else {
       callback(new Error('Blocked by CORS policy'));
     }
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  credentials: true, // BẮT BUỘC: Để hệ thống nhận diện Session/Cookie xác thực giữa hai miền độc lập
+  credentials: true, // Giữ nguyên để đồng bộ cookie session xác thực
   allowedHeaders: ['Content-Type', 'Authorization', 'X-XSRF-TOKEN', 'X-CSRF-TOKEN']
 }));
 
