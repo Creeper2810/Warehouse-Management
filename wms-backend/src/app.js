@@ -71,6 +71,9 @@ function decodeHeaderToken(value) {
 
 function csrfGuard(req, res, next) {
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
+
+  if (req.path === '/api/v1/auth/login') return next();
+  
   if (req.path === '/api/v1/auth/login-mobile' || req.path === '/api/v1/auth/logout-mobile') return next();
   if (req.path === '/api/v1/auth/forgot-password' || req.path === '/api/v1/auth/reset-password') return next();
   if (req.auth?.type === 'bearer') return next();
