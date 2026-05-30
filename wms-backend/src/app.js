@@ -431,7 +431,10 @@ function createApp() {
   const app = express();
 
   app.set('trust proxy', 1);
-  app.use(helmet({ contentSecurityPolicy: false }));
+  app.use(helmet({ 
+          contentSecurityPolicy: false 
+          crossOriginResourcePolicy: { policy: "cross-origin" }, 
+          crossOriginOpenerPolicy: { policy: "unsafe-none" }}));
   app.use(cors({
     origin: function (origin, callback) {
       if (!origin || origin.includes('localhost') || origin.includes('vercel.app') || origin === config.frontendOrigin) {
