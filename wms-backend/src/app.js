@@ -432,7 +432,7 @@ function createApp() {
 
   app.set('trust proxy', 1);
   app.use(helmet({ 
-          contentSecurityPolicy: false 
+          contentSecurityPolicy: false,
           crossOriginResourcePolicy: { policy: "cross-origin" }, 
           crossOriginOpenerPolicy: { policy: "unsafe-none" }}));
   app.use(cors({
