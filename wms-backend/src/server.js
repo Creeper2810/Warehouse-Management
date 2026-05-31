@@ -10,8 +10,6 @@ async function main() {
   }
 
   const app = createApp();
-
-  app.set('trust proxy', 1);
   
   app.listen(config.port, config.host, () => {
     console.log(`WMS Node backend listening on http://${config.host}:${config.port}`);
