@@ -31,7 +31,6 @@
 
 <script setup>
 import { ref } from 'vue'
-import axios from 'axios'
 import { passwordResetApi } from '@/services/api'
 
 const email = ref('')
@@ -45,9 +44,6 @@ async function onSubmit () {
   error.value = ''
 
   try {
-    // CSRF required for web middleware POSTs
-    await axios.get('/sanctum/csrf-cookie', { withCredentials: true })
-
     const resp = await passwordResetApi.forgot({ email: email.value })
     message.value = resp?.data?.message || 'Please check your email to reset your password.'
   } catch (e) {

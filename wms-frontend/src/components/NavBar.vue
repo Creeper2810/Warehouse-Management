@@ -79,8 +79,11 @@ onMounted(() => window.addEventListener('keydown', onKey))
 onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 
 const mobileLogout = async () => {
-  // keep for future if needed; currently logout handled in header
-  auth.logout()
+  try {
+    await auth.logoutRemote()
+  } catch (e) {
+    console.warn('Network logout failed')
+  }
   closeMobile()
   try { await router.push('/login') } catch (e) {}
 }

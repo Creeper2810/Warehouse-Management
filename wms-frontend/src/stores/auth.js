@@ -1,6 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import axios from '@/plugins/axios' 
+import axios from '@/plugins/axios'
+
+const USER_STORAGE_KEY = 'user'
+const TOKEN_STORAGE_KEY = 'auth_token'
 
 const ROLE_ABILITIES = {
   admin: ['admin', 'view-reports', 'stock-in', 'stock-out', 'suppliers'],
@@ -8,10 +11,34 @@ const ROLE_ABILITIES = {
   warehouse_staff: ['stock-in', 'stock-out'],
 }
 
+function readStoredUser() {
+  const raw = localStorage.getItem(USER_STORAGE_KEY)
+  if (!raw || raw === 'undefined') return null
+
+  try {
+    return JSON.parse(raw)
+  } catch (e) {
+    localStorage.removeItem(USER_STORAGE_KEY)
+    return null
+  }
+}
+
+function applyAuthToken(token) {
+  if (token) {
+    axios.defaults.headers.common.Authorization = `Bearer ${token}`
+  } else {
+    delete axios.defaults.headers.common.Authorization
+  }
+}
+
 export const useAuthStore = defineStore('auth', () => {
-  let userRaw = localStorage.getItem('user')
-  if (!userRaw || userRaw === 'undefined') userRaw = 'null'
-  const user = ref(JSON.parse(userRaw))
+  const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY) || ''
+  if (!storedToken) localStorage.removeItem(USER_STORAGE_KEY)
+  const storedUser = storedToken ? readStoredUser() : null
+  if (storedToken && !storedUser) localStorage.removeItem(TOKEN_STORAGE_KEY)
+
+  const user = ref(storedUser)
+  const token = ref(storedUser ? storedToken : '')
 
   const isAuthenticated = computed(() => !!user.value)
   const role = computed(() => (user.value && user.value.role) || null)
@@ -22,33 +49,55 @@ export const useAuthStore = defineStore('auth', () => {
 
   const hasAbility = (ability) => abilities.value.includes('admin') || abilities.value.includes(ability)
 
-  let csrfFetched = false
+  const setAuthState = (nextUser, nextToken) => {
+    user.value = nextUser || null
+    token.value = nextToken || ''
+
+    if (user.value) localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user.value))
+    else localStorage.removeItem(USER_STORAGE_KEY)
+
+    if (token.value) localStorage.setItem(TOKEN_STORAGE_KEY, token.value)
+    else localStorage.removeItem(TOKEN_STORAGE_KEY)
+
+    applyAuthToken(token.value)
+  }
+
   const login = async (email, password) => {
-    if (!csrfFetched) {
-      await axios.get('/api/v1/csrf-cookie') 
-      csrfFetched = true
+    const response = await axios.post('/api/v1/auth/login-mobile', { email, password })
+    const issuedToken = response.data?.token
+
+    if (!issuedToken) {
+      throw new Error('Login response did not include an auth token')
     }
-    try {
-      const response = await axios.post('/api/v1/auth/login', { email, password }, { withCredentials: true })
-      user.value = response.data.user
-      localStorage.setItem('user', JSON.stringify(user.value))
-    } catch (e) {
-      // If a 419 occurs, clear csrfFetched so the next login fetches CSRF again.
-      if (e?.response?.status === 419) {
-        csrfFetched = false
-      }
-      throw e
-    }
+
+    setAuthState(response.data.user, issuedToken)
+    return response
   }
 
   const logout = () => {
-    user.value = null
-    localStorage.removeItem('user')
+    setAuthState(null, '')
+  }
+
+  const logoutRemote = async () => {
+    const currentToken = token.value || localStorage.getItem(TOKEN_STORAGE_KEY)
+    try {
+      if (currentToken) {
+        await axios.post('/api/v1/auth/logout-mobile', null, {
+          headers: { Authorization: `Bearer ${currentToken}` },
+        })
+      }
+    } finally {
+      logout()
+    }
   }
 
   const initAuth = () => {
-    // nothing needed for cookie-based
+    const storedToken = localStorage.getItem(TOKEN_STORAGE_KEY) || ''
+    token.value = storedToken
+    applyAuthToken(storedToken)
   }
 
-  return { user, role, abilities, isAuthenticated, login, logout, initAuth, hasAbility }
+  initAuth()
+
+  return { user, token, role, abilities, isAuthenticated, login, logout, logoutRemote, initAuth, hasAbility }
 })

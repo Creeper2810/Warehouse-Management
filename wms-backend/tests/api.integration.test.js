@@ -34,7 +34,7 @@ describeIf('WMS API integration', () => {
   }
 
   async function csrf(agent) {
-    const response = await agent.get('/sanctum/csrf-cookie').expect(204);
+    const response = await agent.get('/api/v1/csrf-cookie').expect(204);
     const cookie = response.headers['set-cookie'].find((value) => value.startsWith('XSRF-TOKEN='));
     return decodeURIComponent(cookie.split(';')[0].split('=')[1]);
   }
@@ -47,6 +47,14 @@ describeIf('WMS API integration', () => {
       .send({ email: 'admin@gmail.com', password: '123' })
       .expect(200);
     return token;
+  }
+
+  async function loginAsAdminBearer(agent) {
+    const response = await agent
+      .post('/api/v1/auth/login-mobile')
+      .send({ email: 'admin@gmail.com', password: '123' })
+      .expect(200);
+    return response.body.token;
   }
 
   beforeAll(async () => {
@@ -86,7 +94,7 @@ describeIf('WMS API integration', () => {
 
   test('creates CSRF cookie and rejects protected requests without login', async () => {
     const agent = request.agent(app);
-    await agent.get('/sanctum/csrf-cookie').expect(204);
+    await agent.get('/api/v1/csrf-cookie').expect(204);
     await agent.get('/api/v1/products').expect(401);
   });
 
@@ -103,6 +111,54 @@ describeIf('WMS API integration', () => {
     await agent
       .post('/api/v1/auth/logout-mobile')
       .set('Authorization', `Bearer ${response.body.token}`)
+      .expect(200);
+  });
+
+  test('admin can create and update products with a bearer token', async () => {
+    const agent = request.agent(app);
+    const bearer = await loginAsAdminBearer(agent);
+
+    const supplierResponse = await agent
+      .post('/api/v1/suppliers')
+      .set('Authorization', `Bearer ${bearer}`)
+      .send({ name: `Bearer Supplier ${suffix}`, email: `bearer-supplier${suffix}@mail.com` })
+      .expect(201);
+    created.supplierIds.push(supplierResponse.body.id);
+
+    const productResponse = await agent
+      .post('/api/v1/products')
+      .set('Authorization', `Bearer ${bearer}`)
+      .send({
+        sku: `BEARER-SKU-${suffix}`,
+        barcode: `BEARER-BAR-${suffix}`,
+        name: `Bearer Product ${suffix}`,
+        unit: 'pcs',
+        purchase_price: 1000,
+        sale_price: 1500,
+        low_stock_threshold: 10,
+        supplier_ids: [supplierResponse.body.id],
+      })
+      .expect(201);
+    created.productIds.push(productResponse.body.data.id);
+
+    await agent
+      .put(`/api/v1/products/${productResponse.body.data.id}`)
+      .set('Authorization', `Bearer ${bearer}`)
+      .send({
+        sku: `BEARER-SKU-${suffix}`,
+        barcode: `BEARER-BAR-${suffix}`,
+        name: `Updated Bearer Product ${suffix}`,
+        unit: 'pcs',
+        purchase_price: 1000,
+        sale_price: 2000,
+        low_stock_threshold: 10,
+        supplier_ids: [supplierResponse.body.id],
+      })
+      .expect(200);
+
+    await agent
+      .post('/api/v1/auth/logout-mobile')
+      .set('Authorization', `Bearer ${bearer}`)
       .expect(200);
   });
 

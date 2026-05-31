@@ -12,9 +12,8 @@ const router = useRouter()
 const auth = useAuthStore()
 
 const handleLogout = async () => {
-  auth.logout()
   try {
-    await fetch('/api/v1/auth/logout', { method: 'POST', credentials: 'include' })
+    await auth.logoutRemote()
   } catch (e) {
     console.warn('Network logout failed')
   }

@@ -219,6 +219,8 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import axios from '@/plugins/axios'
+import { Notify } from 'quasar'
 
 const username = ref('')
 const password = ref('')
@@ -228,37 +230,27 @@ const token = ref('')
 const loginMode = ref('spa') // 'spa' or 'mobile'
 const router = useRouter()
 const auth = useAuthStore()
-import axios from '@/plugins/axios'
-import { Notify } from 'quasar'
 
 const onLogin = async () => {
   loading.value = true
   error.value = ''
-  token.value = '' // Thêm dòng này để xóa token cũ nếu có
+  token.value = ''
   
   try {
     if (loginMode.value === 'spa') {
-      // 1. Gửi lệnh đăng nhập lên Backend Railway để xác thực
       await auth.login(username.value, password.value)
-      
-      // 2. TẠO THỜI GIAN CHỜ 300MS TẠI ĐÂY:
-      // Ép Frontend dừng lại 1 chút cho trình duyệt kịp lưu Cookie 'Set-Cookie' từ Railway trả về
-      setTimeout(() => {
-        router.push('/') // Sau đó mới nhảy vào trang chính Dashboard
-        Notify.create({ 
-          type: 'positive', 
-          message: 'Logged in successfully!' 
-        })
-      }, 300) // 300 mili-giây là đủ để trình duyệt đồng bộ xong dữ liệu phiên
-
+      router.push('/')
+      Notify.create({
+        type: 'positive',
+        message: 'Logged in successfully!'
+      })
+      return
     } else {
-      // Đoạn xử lý mobile token flow của bạn giữ nguyên...
       const resp = await axios.post('/api/v1/auth/login-mobile', { email: username.value, password: password.value })
       token.value = resp.data.token
       Notify.create({ type: 'positive', message: 'Token issued' })
     }
   } catch (e) {
-    // Cải tiến đoạn bắt lỗi hiển thị rõ ràng hơn
     error.value = e?.response?.data?.message || (loginMode.value === 'spa' ? 'Invalid username or password' : 'Login failed')
   } finally {
     loading.value = false
