@@ -59,7 +59,7 @@ const userRole = computed(() => {
   background: #f5f6fa;
 }
 .main-header {
- background: linear-gradient(120deg, #cfe3fc 60%, #e9ecf3 100%);
+ background: linear-gradient(300deg, #2f598f 60%, #16357b 100%);
   color: #fff;
   padding: 0.9em 1.6em;
   display: flex;
